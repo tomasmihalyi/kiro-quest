@@ -70,6 +70,7 @@ Kiro Quest is an interactive onboarding experience that transforms learning Kiro
    ```bash
    ./kiro-quest.sh
    ```
+- **For integrated experience, execute Kiro Quest from within Kiro IDE terminal.
 
 3. **Follow the interactive menu** to choose and complete quests!
 
