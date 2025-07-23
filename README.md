@@ -5,14 +5,8 @@ A gamified introduction to Kiro - your AI-powered development companion! Complet
 ## 🎬 Demo
 
 <!-- Add your demo GIF or video here -->
-![Kiro Quest Demo](./kiro-quest-demo.mp4)
+![Kiro Quest Demo](kiro-quest-demo.gif)
 *Experience the gamified onboarding journey*
-
-<video width="600" controls>
-  <source src="./demo.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
-
 ## 🎮 What is Kiro Quest?
 
 Kiro Quest is an interactive onboarding experience that transforms learning Kiro into an engaging adventure. Instead of reading boring documentation, you'll complete hands-on quests that teach you everything from basic chat features to advanced automation.
