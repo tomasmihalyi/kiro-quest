@@ -5,7 +5,7 @@ A gamified introduction to Kiro - your AI-powered development companion! Complet
 ## 🎬 Demo
 
 <!-- Add your demo GIF or video here -->
-![Kiro Quest Demo](./kiro-quest-demo.mov)
+![Kiro Quest Demo](./kiro-quest-demo.mp4)
 *Experience the gamified onboarding journey*
 
 <!-- Alternative video format:
