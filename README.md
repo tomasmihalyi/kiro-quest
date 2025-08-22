@@ -1,4 +1,4 @@
-# 🚀 Kiro Quest Enhanced v2.0
+# 🚀 Kiro Quest
 
 A gamified introduction to Kiro - your AI-powered development companion! Complete quests, earn badges, and level up while learning all of Kiro's powerful features. Now with enhanced analytics, streak tracking, achievements, and intelligent guidance!
 
@@ -8,11 +8,11 @@ A gamified introduction to Kiro - your AI-powered development companion! Complet
 ![Kiro Quest Demo](kiro-quest-demo.gif)
 *Experience the enhanced gamified onboarding journey*
 
-## 🎮 What is Kiro Quest Enhanced?
+## 🎮 What is Kiro Quest?
 
-Kiro Quest Enhanced v2.0 is an interactive onboarding experience that transforms learning Kiro into an engaging adventure. Instead of reading boring documentation, you'll complete hands-on quests that teach you everything from basic chat features to advanced automation.
+Kiro Quest is an interactive onboarding experience that transforms learning Kiro into an engaging adventure. Instead of reading boring documentation, you'll complete hands-on quests that teach you everything from basic chat features to advanced automation.
 
-### 🆕 What's New in v2.0
+### 🆕 What's New
 - **Smart Progress Tracking** - Detailed analytics and completion metrics
 - **Streak System** - Daily engagement tracking with fire emoji chains  
 - **Enhanced Achievement System** - Comprehensive badges and milestones
