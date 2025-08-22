@@ -1,9 +1,21 @@
 #!/bin/bash
 
-# Kiro Onboarding Quest - A Gamified Introduction to Kiro
-# Version 1.0
+# Kiro Onboarding Quest - Enhanced Version
+# Version 2.0 - Enhanced Interactive Learning Experience with Legacy Compatibility
 
 set -e
+
+# =============================================================================
+# FEATURE FLAGS AND CONFIGURATION
+# =============================================================================
+
+# Feature flags to enable/disable enhanced features
+ENHANCED_MODE="${KIRO_QUEST_ENHANCED:-true}"
+TUTORIAL_MODE="${KIRO_QUEST_TUTORIAL:-false}"
+ACCESSIBILITY_MODE="${KIRO_QUEST_ACCESSIBILITY:-false}"
+
+# Version information
+QUEST_VERSION="2.0"
 
 # Colors and styling
 RED='\033[0;31m'
@@ -16,9 +28,20 @@ WHITE='\033[1;37m'
 BOLD='\033[1m'
 NC='\033[0m' # No Color
 
-# Badge system
-BADGES_DIR="$HOME/.kiro/quest-badges"
-PROGRESS_FILE="$HOME/.kiro/quest-progress.json"
+# =============================================================================
+# FILE PATHS AND DIRECTORIES
+# =============================================================================
+
+# Core directories
+KIRO_DIR="$HOME/.kiro"
+BADGES_DIR="$KIRO_DIR/quest-badges"
+
+# Legacy files (maintained for backward compatibility)
+PROGRESS_FILE="$KIRO_DIR/quest-progress.json"
+
+# Enhanced files (only used when ENHANCED_MODE=true)
+ENHANCED_PROGRESS_FILE="$KIRO_DIR/quest-progress-enhanced.json"
+STREAK_FILE="$KIRO_DIR/quest-streak.json"
 
 # Ensure directories exist
 mkdir -p "$BADGES_DIR"
@@ -27,6 +50,73 @@ mkdir -p "$BADGES_DIR"
 if [[ ! -f "$PROGRESS_FILE" ]]; then
     echo '{"completed_quests": [], "total_score": 0, "level": 1}' > "$PROGRESS_FILE"
 fi
+
+# =============================================================================
+# ENHANCED FEATURES (Only loaded when ENHANCED_MODE=true)
+# =============================================================================
+
+# Create enhanced progress schema
+create_enhanced_progress_schema() {
+    if [[ "$ENHANCED_MODE" != "true" ]]; then
+        return 0
+    fi
+    
+    local user_id=$(uuidgen 2>/dev/null || echo "user_$(date +%s)")
+    local current_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    
+    cat > "$ENHANCED_PROGRESS_FILE" << 'EOF'
+{
+  "version": "2.0",
+  "user_id": "USER_ID_PLACEHOLDER",
+  "profile": {
+    "created_date": "DATE_PLACEHOLDER",
+    "last_active": "DATE_PLACEHOLDER",
+    "total_sessions": 1,
+    "preferred_learning_style": "guided"
+  },
+  "progress": {
+    "level": 1,
+    "total_score": 0,
+    "completed_quests": [],
+    "current_streak": 0,
+    "longest_streak": 0,
+    "total_time_spent": 0,
+    "quests_detail": {}
+  },
+  "achievements": {
+    "badges": [],
+    "milestones": [],
+    "special_achievements": []
+  },
+  "analytics": {
+    "feature_usage": {
+      "chat_context": 0,
+      "file_references": 0,
+      "mcp_usage": 0
+    },
+    "help_requests": 0,
+    "tutorial_completed": false
+  }
+}
+EOF
+    
+    # Replace placeholders with actual values
+    sed -i.bak "s/USER_ID_PLACEHOLDER/$user_id/g" "$ENHANCED_PROGRESS_FILE"
+    sed -i.bak "s/DATE_PLACEHOLDER/$current_date/g" "$ENHANCED_PROGRESS_FILE"
+    rm -f "${ENHANCED_PROGRESS_FILE}.bak"
+}
+
+# Initialize enhanced features if enabled
+initialize_enhanced_features() {
+    if [[ "$ENHANCED_MODE" == "true" ]]; then
+        if [[ ! -f "$ENHANCED_PROGRESS_FILE" ]]; then
+            create_enhanced_progress_schema
+        fi
+        if [[ ! -f "$STREAK_FILE" ]]; then
+            echo '{"last_day": "'$(date +%Y-%m-%d)'", "streak": 1, "longest_streak": 1}' > "$STREAK_FILE"
+        fi
+    fi
+}
 
 # Badge descriptions function
 get_badge_description() {
@@ -67,7 +157,48 @@ print_progress() {
     
     echo -e "${CYAN}${BOLD}Quest Progress:${NC} ${completed}/${total} quests completed"
     echo -e "${YELLOW}${BOLD}Level:${NC} ${level} | ${GREEN}${BOLD}Score:${NC} ${score} points"
+    
+    # Enhanced progress display
+    if [[ "$ENHANCED_MODE" == "true" ]]; then
+        show_enhanced_progress_display "$completed" "$total"
+    fi
+    
     echo
+}
+
+# Enhanced progress display (only in enhanced mode)
+show_enhanced_progress_display() {
+    local completed="$1"
+    local total="$2"
+    
+    if [[ "$ENHANCED_MODE" != "true" ]]; then
+        return 0
+    fi
+    
+    # ASCII progress bar
+    local progress_percent=$((completed * 100 / total))
+    local filled=$((completed * 20 / total))
+    local empty=$((20 - filled))
+    
+    printf "${BLUE}Progress: ${NC}["
+    printf "%*s" $filled | tr ' ' '█'
+    printf "%*s" $empty | tr ' ' '░'
+    printf "] ${progress_percent}%%\n"
+    
+    # Show streak if available
+    if [[ -f "$STREAK_FILE" ]]; then
+        local current_streak=$(jq -r '.streak // 0' "$STREAK_FILE")
+        if [[ $current_streak -gt 0 ]]; then
+            printf "${CYAN}Streak: ${NC}"
+            for ((i=1; i<=current_streak && i<=10; i++)); do
+                printf "🔥"
+            done
+            if [[ $current_streak -gt 10 ]]; then
+                printf " (+$((current_streak - 10)))"
+            fi
+            printf " ${current_streak} days\n"
+        fi
+    fi
 }
 
 award_badge() {
@@ -93,16 +224,63 @@ award_badge() {
     jq ".level = $new_level" "$PROGRESS_FILE" > /tmp/progress.json
     mv /tmp/progress.json "$PROGRESS_FILE"
     
+    # Update enhanced progress if enabled
+    if [[ "$ENHANCED_MODE" == "true" && -f "$ENHANCED_PROGRESS_FILE" ]]; then
+        local timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+        jq --arg badge_key "$badge_key" \
+           --argjson points "$points" \
+           --arg timestamp "$timestamp" \
+           '.progress.completed_quests += [$badge_key] |
+            .progress.total_score += $points |
+            .progress.level = '"$new_level"' |
+            .achievements.badges += [$badge_key] |
+            .profile.last_active = $timestamp' \
+           "$ENHANCED_PROGRESS_FILE" > /tmp/enhanced_progress.json && \
+           mv /tmp/enhanced_progress.json "$ENHANCED_PROGRESS_FILE"
+    fi
+    
     echo
     echo -e "${GREEN}${BOLD}🎉 BADGE EARNED! 🎉${NC}"
     echo -e "${WHITE}$badge_desc${NC}"
     echo -e "${YELLOW}+${points} points!${NC}"
     
-    if [[ $new_level -gt $(jq -r '.level' "$PROGRESS_FILE" 2>/dev/null || echo 1) ]]; then
+    # Enhanced celebration for enhanced mode
+    if [[ "$ENHANCED_MODE" == "true" ]]; then
+        show_enhanced_celebration "$badge_key" "$points"
+    fi
+    
+    if [[ $new_level -gt $(( ($(jq -r '.total_score' "$PROGRESS_FILE") - points) / 100 + 1 )) ]]; then
         echo -e "${PURPLE}${BOLD}🆙 LEVEL UP! You're now level $new_level!${NC}"
     fi
     echo
     read -p "Press Enter to continue..."
+}
+
+# Enhanced celebration (only in enhanced mode)
+show_enhanced_celebration() {
+    local badge_key="$1"
+    local points="$2"
+    
+    if [[ "$ENHANCED_MODE" != "true" ]]; then
+        return 0
+    fi
+    
+    # Show streak information
+    if [[ -f "$STREAK_FILE" ]]; then
+        local current_streak=$(jq -r '.streak // 0' "$STREAK_FILE")
+        if [[ $current_streak -gt 1 ]]; then
+            echo -e "${CYAN}🔥 ${current_streak}-day streak! Keep it up!${NC}"
+        fi
+    fi
+    
+    # Show progress towards completion
+    local total_completed=$(jq -r '.completed_quests | length' "$PROGRESS_FILE")
+    case $total_completed in
+        3) echo -e "${YELLOW}💫 3 quests completed! You're getting the hang of this!${NC}" ;;
+        5) echo -e "${YELLOW}⭐ Halfway there! 5 quests completed!${NC}" ;;
+        7) echo -e "${YELLOW}🌟 Almost done! Just 2 more quests to go!${NC}" ;;
+        9) echo -e "${PURPLE}🎊 QUEST CHAMPION! All quests completed! 🎊${NC}" ;;
+    esac
 }
 
 show_badges() {
@@ -613,6 +791,9 @@ main() {
         echo "On macOS: brew install jq"
         exit 1
     fi
+    
+    # Initialize enhanced features if enabled
+    initialize_enhanced_features
     
     quest_menu
 }
